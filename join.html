@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doplane — Присоединиться к семье</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 32px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        }
+        .icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+        }
+        h1 { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+        .family-name { font-size: 17px; color: #007AFF; font-weight: 500; margin-bottom: 20px; }
+        p { font-size: 15px; color: #666; line-height: 1.5; margin-bottom: 24px; }
+        .btn {
+            display: block;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s;
+            -webkit-appearance: none;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-store {
+            display: block;
+            margin-top: 12px;
+            background: #f5f5f7;
+            color: #007AFF !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .hint { margin-top: 16px; font-size: 13px; color: #999; }
+        .error { color: #FF3B30; font-size: 15px; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">👨‍👩‍👧‍👦</div>
+        <h1 id="title">Присоединиться к семье</h1>
+        <div class="family-name" id="familyName"></div>
+        <p id="desc">Открываем приглашение в приложении Doplane…</p>
+        <a class="btn" id="openBtn" href="#">Открыть в Doplane</a>
+        <a class="btn-store" id="storeLink" href="https://apps.apple.com/app/doplane" style="display:none;">Скачать Doplane из App Store</a>
+        <div class="hint" id="hint"></div>
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var familyId = params.get('id');
+        var token = params.get('token');
+        var familyName = params.get('name');
+
+        if (!familyId || !token) {
+            document.getElementById('error').textContent = 'Неверная ссылка приглашения.';
+            document.getElementById('openBtn').style.display = 'none';
+            document.getElementById('desc').style.display = 'none';
+        } else {
+            if (familyName) {
+                document.getElementById('familyName').textContent = decodeURIComponent(familyName);
+            }
+
+            var nameParam = familyName ? encodeURIComponent(decodeURIComponent(familyName)) : 'Family';
+            var deepLink = 'doplane://family/join/' + familyId + '/' + token + '/' + nameParam;
+            var btn = document.getElementById('openBtn');
+            btn.href = deepLink;
+
+            // Try to open the app automatically. Universal Links should already
+            // intercept this page on iOS — if we are still in Safari, it means the
+            // app isn't installed (or AASA wasn't fetched yet), so fall back to a
+            // manual button + App Store link.
+            var fellBack = false;
+            function showFallback() {
+                if (fellBack) return;
+                fellBack = true;
+                document.getElementById('desc').textContent = 'Если приложение не открылось, установите Doplane.';
+                document.getElementById('storeLink').style.display = 'block';
+            }
+
+            // First, try a manual scheme launch on a hidden iframe (Safari blocks
+            // top-window auto-redirect to custom schemes, but iframe trick still
+            // works on most iOS versions).
+            try {
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = deepLink;
+                document.body.appendChild(iframe);
+            } catch (e) { /* ignore */ }
+
+            // After 1500ms with no app handover, surface the App Store link.
+            var start = Date.now();
+            setTimeout(function() {
+                if (Date.now() - start < 2500 && document.visibilityState === 'visible') {
+                    showFallback();
+                }
+            }, 1500);
+
+            btn.addEventListener('click', function(e) {
+                var clickStart = Date.now();
+                setTimeout(function() {
+                    if (Date.now() - clickStart < 2000 && document.visibilityState === 'visible') {
+                        showFallback();
+                    }
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>
