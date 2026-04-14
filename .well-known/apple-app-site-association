@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["YXT3679A3U.com.bogdan.doplane"],
+        "components": [
+          {
+            "/": "/join.html",
+            "?": { "id": "*", "token": "*" },
+            "comment": "Open Doplane family-join invitation"
+          }
+        ]
+      }
+    ]
+  }
+}
